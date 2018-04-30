@@ -9,6 +9,6 @@ compile_commands.json
 CTestTestfile.cmake
 *.so
 saved_data/
-client
-server
+bin/
+lib/
 .codelite/
