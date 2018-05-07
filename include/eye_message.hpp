@@ -23,7 +23,7 @@ struct eye_message {
 
     ulong seq_number;
     uint64_t time_seconds;
-    uint32_t time_millis;
+    uint32_t time_nanos;
     bool id;
     float confidence;
     float normalized_pos_x;
@@ -35,7 +35,7 @@ struct eye_message {
     void serialize(Archive& ar, const unsigned int version) {
         ar &  seq_number;
         ar &  time_seconds;
-        ar &  time_millis;
+        ar &  time_nanos;
         ar &  id;
         ar &  confidence;
         ar &  normalized_pos_x;

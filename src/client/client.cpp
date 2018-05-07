@@ -12,6 +12,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/thread.hpp>
 #include <iostream>
 #include <vector>
 #include "../../include/connection.hpp" // Must come before boost/serialization headers.
@@ -31,16 +32,27 @@ public:
     client(boost::asio::io_service& io_service,
            const std::string& host, const std::string& service)
         : connection_(io_service) {
+        this->io_service = &io_service;
+
         // Resolve the host name into an IP address.
         boost::asio::ip::tcp::resolver resolver(io_service);
         boost::asio::ip::tcp::resolver::query query(host, service);
         boost::asio::ip::tcp::resolver::iterator endpoint_iterator =
             resolver.resolve(query);
 
+        // Open file for data logging
+        open_file();
+
         // Start an asynchronous connect operation.
         boost::asio::async_connect(connection_.socket(), endpoint_iterator,
                                    boost::bind(&client::handle_connect, this,
                                                boost::asio::placeholders::error));
+    }
+
+    /// Deconstructor
+    ~client() {
+        // Close data log file
+        close_file();
     }
 
     /// Handle completion of a connect operation.
@@ -63,34 +75,34 @@ public:
     /// Handle completion of a read operation.
     void handle_read(const boost::system::error_code& e) {
         if (!e) {
-            open_file();
 
-            // Print out the data that was received.
+            // Print out the eye data that was received.
             for (std::size_t i = 0; i < stocks_.size(); ++i) {
-                std::cout << "EyeData number " << i << "\n";
-                std::cout << "  sequence_num: " << stocks_[i].seq_number << "\n";
-                std::cout << "  time_seconds: " << stocks_[i].time_seconds << "\n";
-                std::cout << "  time_millis: " << stocks_[i].time_millis << "\n";
-                std::cout << "  id: " << stocks_[i].id << "\n";
-                std::cout << "  confidence: " << stocks_[i].confidence << "\n";
-                std::cout << "  normalized_pos_x: " << stocks_[i].normalized_pos_x << "\n";
-                std::cout << "  normalized_pos_y: " << stocks_[i].normalized_pos_y << "\n";
-                std::cout << "  pupil_diameter: " << stocks_[i].pupil_diameter << "\n";
+                message_count++;
+                std::cout<< "\n" << "Count: " << message_count << ", ";
+                std::cout << "Time(Sec): " << stocks_[i].time_seconds << ", ";
+                std::cout << "Time(Nanos): " << stocks_[i].time_nanos << ", ";
+                std::cout << "ID: " << stocks_[i].id << ", ";
+                std::cout << "Confidence: " << stocks_[i].confidence << ", ";
+                std::cout << "NormalizedPosX: "  << stocks_[i].normalized_pos_x << ", ";
+                std::cout << "NormalizedPosY: " << stocks_[i].normalized_pos_y << ", ";
+                std::cout << "PupilDiameter: " << stocks_[i].pupil_diameter << ", ";
 
+                // Write sample data to file
                 write_sample_to_file(stocks_[i]);
 
             }
-            close_file();
-
+            // Listen for additional data
+            connection_.async_read(stocks_,
+                                   boost::bind(&client::handle_read, this,
+                                               boost::asio::placeholders::error));
         } else {
             // An error occurred.
             std::cerr << e.message() << std::endl;
         }
-
-        // Since we are not starting a new operation the io_service will run out of
-        // work to do and the client will exit.
     }
 
+    /// Open a file, named with timestamp, for logging eye data
     void open_file() {
         // Get Time for Filename
         time_t rawtime;
@@ -117,19 +129,39 @@ public:
         myfile << "\n";
     }
 
+    /// Close data log file
     void close_file() {
         myfile.close();
     }
 
+    /// Write an eye message's data to the log file
     void write_sample_to_file(eye_message s) {
         myfile << s.time_seconds << ",";
-        myfile << s.time_millis << ",";
+        myfile << s.time_nanos << ",";
         myfile << s.id << ",";
         myfile << s.confidence << ",";
         myfile << s.normalized_pos_x << ",";
         myfile << s.normalized_pos_y << ",";
         myfile << s.pupil_diameter;
         myfile << "\n";
+    }
+
+    /// Run the io service on a seperate thread
+    void start() {
+        should_stop = false;
+        client_thread = new boost::thread([this]() {
+            io_service->run();
+        });
+    }
+
+    /// Stop the thread running the io service
+    void stop() {
+        should_stop = true;
+        io_service->stop();
+        boost::system::error_code e;
+        connection_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, e);
+        connection_.socket().close(e);
+        client_thread->join();
     }
 
 private:
@@ -139,8 +171,20 @@ private:
     /// The data received from the server.
     std::vector<eye_message> stocks_;
 
-    // CSV File For Saved Data
+    /// CSV File For Saved Data
     std::ofstream myfile;
+
+    /// IO Service
+    boost::asio::io_service* io_service;
+
+    /// Run Thread
+    boost::thread* client_thread;
+
+    /// Flag for client thread execution
+    std::atomic_bool should_stop {false};
+
+    /// Counter for number of received messages
+    int message_count = 0;
 
 };
 
@@ -154,24 +198,29 @@ int main(int argc, char* argv[])
         std::string port = "12345";
 
         // Check command line arguments.
-        if(argc == 1) {
-            std::cout << "No Host or Port Given." << std::endl;
-        } else if(argc == 1) {
-            std::cout << "No Port Given." << std::endl;
-            host = argv[1];
+        if(argc == 2) {
+            std::cout << "No Host IP Given - Using default." << std::endl;
+            port = argv[1];
         } else if (argc == 3) {
             host = argv[1];
             port = argv[2];
         } else {
-            std::cerr << "Usage: dfsfclient <host> <port>" << std::endl;
+            std::cerr << "Usage: client <host> <port>, client <port>, client" << std::endl;
             return 1;
         }
+        std::cout << "Host: " << host << ", Port: " << port << "..." << std::endl;
 
-        std::cout << "Running, Host: " << host << ", Port: " << port << "..." << std::endl;
-
+        // Setup Client
         boost::asio::io_service io_service;
         codechallenge::client client(io_service, host, port);
-        io_service.run();
+
+        // Run until input
+        client.start();
+        std::cout << "Running..." << std::endl;
+        system("read -p 'Press <Enter> to stop' var");
+        client.stop();
+        std::cout << "Client Stopped" << std::endl;
+
     } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
     }

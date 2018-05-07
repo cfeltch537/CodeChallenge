@@ -17,7 +17,7 @@ file (GLOB shared_header_files "${include_dir}/*.hpp")
 
 add_library(shared SHARED ${shared_source_files} ${shared_header_files})
 
-find_package( Boost REQUIRED COMPONENTS serialization system filesystem)
+find_package( Boost REQUIRED COMPONENTS serialization system filesystem thread)
 include_directories(${BOOST_INCLUDE_DIRS})
 
 add_executable (server ${server_source_files})
