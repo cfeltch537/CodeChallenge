@@ -35,7 +35,7 @@ class server
 public:
     /// Constructor opens the acceptor and starts waiting for the first incoming
     /// connection.
-    server(boost::asio::io_service& io_service, unsigned short port)
+    server(boost::asio::io_service& io_service)
         : acceptor_(io_service,
                     boost::asio::local::stream_protocol::endpoint("/tmp/code_challenge/streams")) {
         this->io_service = &io_service;
@@ -60,7 +60,6 @@ public:
                 t.async_wait(boost::bind(&server::send_eye_message, this, boost::asio::placeholders::error, &t, conn));
                 io.run();
             });
-
         }
 
         // Start an accept operation for a new connection.
@@ -151,15 +150,10 @@ private:
 int main(int argc, char* argv[])
 {
     try {
-        unsigned short port;
 
         // Handle command line arguments.
-        if (argc == 2) {
-            port = boost::lexical_cast<unsigned short>(argv[1]);
-            std::cout << "Using Port: " << port << std::endl;
-        } else {
-            std::cout << "Usage: server, server <port>" << std::endl;
-            return 1;
+        if (argc != 1) {
+            std::cout << "Ignoring additional input arguments." << std::endl;
         }
 
         // Remove and recreate socket directory, just in case
@@ -168,7 +162,7 @@ int main(int argc, char* argv[])
 
         // Setup Server
         boost::asio::io_service io_service;
-        codechallenge::server server(io_service, port);
+        codechallenge::server server(io_service);
 
         // Run until input
         server.start();

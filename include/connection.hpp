@@ -81,14 +81,11 @@ public:
     template <typename T, typename Handler>
     void async_read(T& t, Handler handler) {
         // Issue a read operation to read exactly the number of bytes in a header.
-        void (connection::*f)(
-            const boost::system::error_code&,
-            T&, boost::tuple<Handler>)
-            = &connection::handle_read_header<T, Handler>;
-        boost::asio::async_read(socket_, boost::asio::buffer(inbound_header_),
-                                boost::bind(f,
-                                            this, boost::asio::placeholders::error, boost::ref(t),
-                                            boost::make_tuple(handler)));
+        void (connection::*f)(const boost::system::error_code&,T&, boost::tuple<Handler>) = &connection::handle_read_header<T, Handler>;
+        boost::asio::async_read(
+            socket_,
+            boost::asio::buffer(inbound_header_),
+            boost::bind(f,this, boost::asio::placeholders::error, boost::ref(t),boost::make_tuple(handler)));
     }
 
     /// Handle a completed read of a message header. The handler is passed using

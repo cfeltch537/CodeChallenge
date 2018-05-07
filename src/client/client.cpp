@@ -29,16 +29,15 @@ class client
 {
 public:
     /// Constructor starts the asynchronous connect operation.
-    client(boost::asio::io_service& io_service,
-           const std::string& host, const std::string& service)
+    client(boost::asio::io_service& io_service)
         : connection_(io_service) {
         this->io_service = &io_service;
-
-        boost::asio::local::stream_protocol::endpoint ep("/tmp/code_challenge/streams");
 
         // Open file for data logging
         open_file();
 
+        // Create end-point, and connect to server
+        boost::asio::local::stream_protocol::endpoint ep("/tmp/code_challenge/streams");
         connection_.socket().async_connect(ep, boost::bind(&client::handle_connect, this,
                                                boost::asio::placeholders::error));
     }
@@ -188,30 +187,19 @@ int main(int argc, char* argv[])
 {
     try {
 
-        std::string host = "localhost";
-        std::string port = "12345";
-
         // Check command line arguments.
-        if(argc == 2) {
-            std::cout << "No Host IP Given - Using default." << std::endl;
-            port = argv[1];
-        } else if (argc == 3) {
-            host = argv[1];
-            port = argv[2];
-        } else {
-            std::cerr << "Usage: client <host> <port>, client <port>, client" << std::endl;
-            return 1;
+        if(argc != 1) {
+            std::cout << "Ignoring additional input arguments." << std::endl;
         }
-        std::cout << "Host: " << host << ", Port: " << port << "..." << std::endl;
 
         // Setup Client
         boost::asio::io_service io_service;
-        codechallenge::client client(io_service, host, port);
+        codechallenge::client client(io_service);
 
         // Run until input
         client.start();
         std::cout << "Running..." << std::endl;
-        system("read -p 'Press <Enter> to stop' var");
+        system("read -p 'Press <Enter> to stop\n' var");
         client.stop();
         std::cout << "Client Stopped" << std::endl;
 
