@@ -34,18 +34,12 @@ public:
         : connection_(io_service) {
         this->io_service = &io_service;
 
-        // Resolve the host name into an IP address.
-        boost::asio::ip::tcp::resolver resolver(io_service);
-        boost::asio::ip::tcp::resolver::query query(host, service);
-        boost::asio::ip::tcp::resolver::iterator endpoint_iterator =
-            resolver.resolve(query);
+        boost::asio::local::stream_protocol::endpoint ep("/tmp/code_challenge/streams");
 
         // Open file for data logging
         open_file();
 
-        // Start an asynchronous connect operation.
-        boost::asio::async_connect(connection_.socket(), endpoint_iterator,
-                                   boost::bind(&client::handle_connect, this,
+        connection_.socket().async_connect(ep, boost::bind(&client::handle_connect, this,
                                                boost::asio::placeholders::error));
     }
 

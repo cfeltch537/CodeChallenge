@@ -44,7 +44,7 @@ public:
 
     /// Get the underlying socket. Used for making a connection or for accepting
     /// an incoming connection.
-    boost::asio::ip::tcp::socket& socket() {
+    boost::asio::local::stream_protocol::socket& socket() {
         return socket_;
     }
 
@@ -149,7 +149,7 @@ public:
 
 private:
     /// The underlying socket.
-    boost::asio::ip::tcp::socket socket_;
+    boost::asio::local::stream_protocol::socket socket_;
 
     /// The size of a fixed length header.
     enum { header_length = 8 };

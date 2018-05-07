@@ -23,6 +23,8 @@
 #include <chrono>
 #include <ctime>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/filesystem.hpp>
+
 
 namespace codechallenge
 {
@@ -35,7 +37,7 @@ public:
     /// connection.
     server(boost::asio::io_service& io_service, unsigned short port)
         : acceptor_(io_service,
-                    boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)) {
+                    boost::asio::local::stream_protocol::endpoint("/tmp/code_challenge/streams")) {
         this->io_service = &io_service;
 
         // Start an accept operation for a new connection.
@@ -129,7 +131,7 @@ public:
 
 private:
     /// The acceptor object used to accept incoming socket connections.
-    boost::asio::ip::tcp::acceptor acceptor_;
+    boost::asio::local::stream_protocol::acceptor acceptor_;
 
     /// IO Service
     boost::asio::io_service* io_service;
@@ -160,6 +162,10 @@ int main(int argc, char* argv[])
             return 1;
         }
 
+        // Remove and recreate socket directory, just in case
+        boost::filesystem::remove_all("/tmp/code_challenge/");
+        boost::filesystem::create_directories("/tmp/code_challenge/");
+
         // Setup Server
         boost::asio::io_service io_service;
         codechallenge::server server(io_service, port);
@@ -170,6 +176,9 @@ int main(int argc, char* argv[])
         system("read -p 'Press <Enter> to stop\n' var");
         server.stop();
         std::cout << "Server Stopped" << std::endl;
+
+        // Cleanup tmp directory
+        boost::filesystem::create_directories("/tmp/code_challenge/");
 
     } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
