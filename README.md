@@ -36,9 +36,9 @@ Boost installation instructions:
 https://www.boost.org/doc/libs/1_58_0/more/getting_started/unix-variants.html
 ```
 OR... through package manager (version may vary)
+
 ```
 sudo apt-get install libboost-all-development
-
 ```
 
 ### Building
@@ -67,11 +67,10 @@ In the /bin folder, should be a 'client' and 'server' executable
 The client and server both run without any additional input parameters.
 Both run until interrupted by the ENTER key press.
 
-Run Server
+### Run Server
 
 ```
 ./bin/server
-
 ```
 
 Example Output
@@ -85,13 +84,14 @@ Client Disconnected
 Server Stopped
 ```
 
-Run Client
+### Run Client
 
 ```
 ./bin/client
 ```
 
 Example Output
+
 ```
 ./client
 Running...
@@ -100,6 +100,7 @@ Count: 1, Time(Sec): 1525753885, Time(Nanos): 700283012, ID: 1, Confidence: 0, N
 Count: 2, Time(Sec): 1525753885, Time(Nanos): 711014350, ID: 1, Confidence: 0, NormalizedPosX: 0.492, NormalizedPosY: 0.649, PupilDiameter: 21,
 Client Stopped
 ```
+
 ## ToDo
 
 * Implement Unit Testing
@@ -113,6 +114,7 @@ Client Stopped
 different messaging and transport libraries if needed.
 
   **The asynchronous message handling of boost::asio is baked into this solution pretty deeply, but the 'base_connection' class in 'connection.hpp' can be implemented to make use of any message format or transport library.**
+
 2. Your solution should focus on low latency whenever possible without sacrificing modular
 design constraints listed in 1.
 
@@ -121,6 +123,7 @@ design constraints listed in 1.
 3. Your solution must be appropriately documented and tested.
 
   **This README is meant to serve as documentation. I manually tested the final implementation but have not yet had a chance to implement any unit tests.**
+
 
 ### Things you should consider in constructing your solution:
 1. Design trade-offs such as why a particular message or transport library was selected,
