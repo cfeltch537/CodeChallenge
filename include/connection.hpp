@@ -27,18 +27,12 @@
 namespace codechallenge
 {
 
-/// The connection class provides serialization primitives on top of a socket.
-/**
- * Each message sent using this class consists of:
- * @li An 8-byte header containing the length of the serialized data in
- * hexadecimal.
- * @li The serialized data.
- */
-class connection
+/// The base_connection class provides serialization primitives on top of a socket.
+class base_connection
 {
 public:
     /// Constructor.
-    connection(boost::asio::io_service& io_service)
+    base_connection(boost::asio::io_service& io_service)
         : socket_(io_service) {
     }
 
@@ -46,6 +40,37 @@ public:
     /// an incoming connection.
     boost::asio::local::stream_protocol::socket& socket() {
         return socket_;
+    }
+
+    /// Asynchronously write a data structure to the socket.
+    template <typename T, typename Handler>
+    void async_write(const T& t, Handler handler);
+
+    /// Asynchronously read a data structure from the socket.
+    template <typename T, typename Handler>
+    void async_read(T& t, Handler handler);
+
+
+protected:
+    /// The underlying socket.
+    boost::asio::local::stream_protocol::socket socket_;
+};
+
+
+/// The connection class provides serialization primitives on top of a socket.
+/**
+ * Each message sent using this class consists of:
+ * @li An 8-byte header containing the length of the serialized data in
+ * hexadecimal.
+ * @li The serialized data.
+ */
+class connection : public base_connection
+{
+public:
+
+    connection(boost::asio::io_service& io_service)
+        : base_connection(io_service) {
+        // Nothing to do here
     }
 
     /// Asynchronously write a data structure to the socket.
@@ -145,9 +170,6 @@ public:
     }
 
 private:
-    /// The underlying socket.
-    boost::asio::local::stream_protocol::socket socket_;
-
     /// The size of a fixed length header.
     enum { header_length = 8 };
 
@@ -163,6 +185,7 @@ private:
     /// Holds the inbound data.
     std::vector<char> inbound_data_;
 };
+
 
 typedef boost::shared_ptr<connection> connection_ptr;
 

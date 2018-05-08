@@ -104,7 +104,7 @@ public:
 
         // Schedule next message, or finish
         if(!should_stop && !e) {
-            t->expires_at(t->expires_at() + boost::posix_time::milliseconds(1000));
+            t->expires_at(t->expires_at() + boost::posix_time::milliseconds(10));
             t->async_wait(boost::bind(&server::send_eye_message, this, boost::asio::placeholders::error, t, conn));
         } else {
             t->get_io_service().stop();

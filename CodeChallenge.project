@@ -3,15 +3,14 @@
   <VirtualDirectory Name="src">
     <File Name="src/client/client.cpp"/>
     <File Name="src/server/server.cpp"/>
-    <File Name="src/shared/temp.cpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="include">
     <File Name="include/connection.hpp"/>
     <File Name="include/eye_message.hpp"/>
   </VirtualDirectory>
 
-  <Settings Type="Dynamic Library">
-    <Configuration Name="Debug" CompilerType="gnu g++" DebuggerType="GNU gdb debugger" Type="Dynamic Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+  <Settings Type="Executable">
+    <Configuration Name="Debug" CompilerType="gnu g++" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
       <Compiler Options="-g" Required="yes" PreCompiledHeader="">
         <IncludePath Value="."/>
       </Compiler>
